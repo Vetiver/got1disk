@@ -2,18 +2,22 @@
 
 T1Disk Go Library предоставляет удобный интерфейс для загрузки файлов в T1 Диск через API. Библиотека позволяет получить токен авторизации, загрузить файлы в объектное хранилище S3 и подтвердить успешную загрузку.
 
-
 Использование
 
 ### Шаг 1: Авторизация
 
 Перед тем как загружать файлы, вам нужно получить токен авторизации. Для этого выполните функцию `Login()`.
 
+
+```go
 t1disk := t1disk.NewT1Disk("your-login", "your-password", true)
 if err := t1disk.Login(); err != nil {
-	fmt.Println("Ошибка при авторизации:", err)
-	return
+    fmt.Println("Ошибка при авторизации:", err)
+    return
 }
+```
+
+
 ### Шаг 2: Загрузка файла
 
 Чтобы загрузить файл, используйте функцию `UploadToT1Disk()`. Она выполняет все шаги, включая:
@@ -24,12 +28,15 @@ if err := t1disk.Login(); err != nil {
 
 Пример загрузки файла:
 
+```go
 filePath := "/path/to/your/file.mp4"      // Путь к вашему файлу на локальной машине
 pathOnT1Disk := "T1 Диск/таймер/10 hour timer.mp4"  // Путь, куда будет загружен файл на T1 Диск
 
 if err := t1disk.UploadToT1Disk(pathOnT1Disk, filePath, false); err != nil {
 	fmt.Println("Ошибка при загрузке файла:", err)
 }
+```
+
 
 ### Описание API
 
@@ -42,6 +49,9 @@ if err := t1disk.UploadToT1Disk(pathOnT1Disk, filePath, false); err != nil {
 
 ### Пример использования
 
+
+```go
+
 package main
 
 import (
@@ -53,20 +63,21 @@ func main() {
 	// Создаем новый экземпляр клиента
 	t1disk := t1disk.NewT1Disk("your-login", "your-password", true)
 
-	// Шаг 1: Авторизация
+    // Шаг 1: Авторизация
 	if err := t1disk.Login(); err != nil {
 		fmt.Println("Ошибка при авторизации:", err)
 		return
 	}
 
-	// Шаг 2: Загрузка файла
+    // Шаг 2: Загрузка файла
 	filePath := "/path/to/your/file.mp4"  // Локальный путь к файлу
 	pathOnT1Disk := "T1 Диск/таймер/10 hour timer.mp4"  // Путь на T1 Диске
 
-	if err := t1disk.UploadToT1Disk(pathOnT1Disk, filePath, false); err != nil {
+    if err := t1disk.UploadToT1Disk(pathOnT1Disk, filePath, false); err != nil {
 		fmt.Println("Ошибка при загрузке файла:", err)
 		return
 	}
 
-	fmt.Println("Файл успешно загружен!")
+    fmt.Println("Файл успешно загружен!")
 }
+```
