@@ -1,4 +1,4 @@
-package main
+package got1disk
 
 import (
 	"bytes"
