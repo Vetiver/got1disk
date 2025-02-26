@@ -1,83 +1,153 @@
+
 # T1Disk Go Library
 
-T1Disk Go Library предоставляет удобный интерфейс для загрузки файлов в T1 Диск через API. Библиотека позволяет получить токен авторизации, загрузить файлы в объектное хранилище S3 и подтвердить успешную загрузку.
-
-Использование
+**T1Disk Go Library** предоставляет интерфейс для работы с файловым хранилищем T1 Disk, включая авторизацию, получение ссылки для загрузки файлов и подтверждение успешной загрузки.
 
 ### Шаг 1: Авторизация
 
-Перед тем как загружать файлы, вам нужно получить токен авторизации. Для этого выполните функцию `Login()`.
+Прежде чем загружать файлы, необходимо авторизоваться и получить токен. Для этого используется функция `Login()`.
 
+Пример:
 
 ```go
-t1disk := t1disk.NewT1Disk("your-login", "your-password", true)
-if err := t1disk.Login(); err != nil {
+t1disk := got1disk.NewT1Disk(true, logger, "https://base-url-t1.com")
+token, err := t1disk.Login("your-email", "your-password")
+if err != nil {
     fmt.Println("Ошибка при авторизации:", err)
     return
 }
+fmt.Println("Токен:", token)
 ```
-
 
 ### Шаг 2: Загрузка файла
 
-Чтобы загрузить файл, используйте функцию `UploadToT1Disk()`. Она выполняет все шаги, включая:
+Для загрузки файла используется функция `UploadToT1Disk()`. Она выполняет все шаги загрузки:
 
-* Получение ссылки для загрузки в S3,
-* Загрузку файла,
+* Получение ссылки для загрузки файла;
+* Загрузка файла;
 * Подтверждение успешной загрузки.
 
-Пример загрузки файла:
+Пример:
 
 ```go
-filePath := "/path/to/your/file.mp4"      // Путь к вашему файлу на локальной машине
-pathOnT1Disk := "T1 Диск/таймер/10 hour timer.mp4"  // Путь, куда будет загружен файл на T1 Диск
+filePath := "/path/to/your/file.mp4"        // Путь к файлу на локальной машине
+pathOnT1Disk := "T1Disk/timers/10_hours.mp4" // Путь, куда файл будет загружен на T1 Disk
 
-if err := t1disk.UploadToT1Disk(pathOnT1Disk, filePath, false); err != nil {
-	fmt.Println("Ошибка при загрузке файла:", err)
+err := t1disk.UploadToT1Disk(pathOnT1Disk, "https://base-url-t1.com", filePath, token, false)
+if err != nil {
+    fmt.Println("Ошибка при загрузке файла:", err)
+    return
 }
+fmt.Println("Файл успешно загружен!")
 ```
 
+### API
 
-### Описание API
+1. **`NewT1Disk(permanentAuth bool, logger *zap.Logger, BaseUrlT1 string) *T1DiskConstructor`**
 
-1. **`NewT1Disk(login string, password string, permanentAuth bool) *T1Disk`** : Конструктор для создания экземпляра библиотеки. Принимает логин, пароль и флаг, указывающий на постоянную авторизацию.
-2. **`Login() error`** : Выполняет запрос на получение токена авторизации. В случае успешного входа токен будет сохранен внутри структуры.
-3. **`GetUploadURL(path string, multipart bool) (string, string, string, error)`** : Запрашивает ссылку для загрузки файла в объектное хранилище S3. Возвращает URL для загрузки, `Content-Type`, и `confirm_url`.
-4. **`UploadFile(uploadURL string, contentType string, filePath string) error`** : Загружает файл по полученному `uploadURL`. Использует `Content-Type` для правильной загрузки и токен авторизации.
-5. **`ConfirmUpload(confirmURL string) error`** : Подтверждает успешную загрузку файла с помощью запроса к `confirm_url`.
-6. **`UploadToT1Disk(path string, filePath string, multipart bool) error`** : Полный процесс загрузки файла, который включает получение URL, загрузку файла и подтверждение загрузки.
+   Конструктор для создания нового экземпляра T1Disk.
+
+   **Параметры:**
+
+   * `permanentAuth`: флаг для постоянной авторизации (true/false);
+   * `logger`: логгер для логирования операций;
+   * `BaseUrlT1`: базовый URL для API T1 Disk.
+2. **`Login(login string, password string) (string, error)`**
+
+   Авторизация в системе и получение токена доступа.
+
+   **Возвращает:**
+
+   * `string`: токен авторизации;
+   * `error`: ошибка, если авторизация не удалась.
+3. **`GetUploadURL(path string, baseURL string, token string, multipart bool) (string, string, string, error)`**
+
+   Получение URL для загрузки файла в T1 Disk.
+
+   **Параметры:**
+
+   * `path`: путь на T1 Disk, куда будет загружен файл;
+   * `baseURL`: базовый URL API;
+   * `token`: токен авторизации;
+   * `multipart`: флаг для использования многочастной загрузки.
+
+     **Возвращает:**
+   * URL для загрузки;
+   * тип содержимого (`Content-Type`);
+   * URL для подтверждения загрузки;
+   * ошибка, если не удалось получить URL.
+4. **`UploadFile(uploadURL string, contentType string, filePath string, token string) error`**
+
+   Загрузка файла по URL.
+
+   **Параметры:**
+
+   * `uploadURL`: URL для загрузки файла;
+   * `contentType`: тип содержимого файла;
+   * `filePath`: путь к файлу на локальной машине;
+   * `token`: токен авторизации.
+
+     **Возвращает:**
+   * ошибка, если загрузка не удалась.
+5. **`ConfirmUpload(confirmURL string, token string) error`**
+
+   Подтверждение успешной загрузки файла.
+
+   **Параметры:**
+
+   * `confirmURL`: URL для подтверждения загрузки;
+   * `token`: токен авторизации.
+
+     **Возвращает:**
+   * ошибка, если подтверждение не удалось.
+6. **`UploadToT1Disk(path string, baseURL string, filePath string, token string, multipart bool) error`**
+
+   Полный процесс загрузки файла в T1 Disk, включая получение URL для загрузки, саму загрузку и подтверждение.
+
+   **Параметры:**
+
+   * `path`: путь на T1 Disk;
+   * `baseURL`: базовый URL API;
+   * `filePath`: путь к файлу на локальной машине;
+   * `token`: токен авторизации;
+   * `multipart`: флаг для многочастной загрузки.
+
+     **Возвращает:**
+   * ошибка, если что-то пошло не так.
 
 ### Пример использования
 
-
 ```go
-
 package main
 
 import (
 	"fmt"
-	"t1disk-go-library/t1disk"
+	"go.uber.org/zap"
+	"got1disk"
 )
 
 func main() {
-	// Создаем новый экземпляр клиента
-	t1disk := t1disk.NewT1Disk("your-login", "your-password", true)
+	logger, _ := zap.NewProduction()
 
-    // Шаг 1: Авторизация
-	if err := t1disk.Login(); err != nil {
+	// Создаем новый экземпляр клиента
+	t1disk := got1disk.NewT1Disk(true, logger, "https://base-url-t1.com")
+
+	// Шаг 1: Авторизация
+	token, err := t1disk.Login("your-email", "your-password")
+	if err != nil {
 		fmt.Println("Ошибка при авторизации:", err)
 		return
 	}
+	fmt.Println("Токен авторизации:", token)
 
-    // Шаг 2: Загрузка файла
-	filePath := "/path/to/your/file.mp4"  // Локальный путь к файлу
-	pathOnT1Disk := "T1 Диск/таймер/10 hour timer.mp4"  // Путь на T1 Диске
-
-    if err := t1disk.UploadToT1Disk(pathOnT1Disk, filePath, false); err != nil {
+	// Шаг 2: Загрузка файла
+	filePath := "/path/to/your/file.mp4"
+	pathOnT1Disk := "T1Disk/timers/10_hours.mp4"
+	err = t1disk.UploadToT1Disk(pathOnT1Disk, "https://base-url-t1.com", filePath, token, false)
+	if err != nil {
 		fmt.Println("Ошибка при загрузке файла:", err)
 		return
 	}
-
-    fmt.Println("Файл успешно загружен!")
+	fmt.Println("Файл успешно загружен!")
 }
 ```
